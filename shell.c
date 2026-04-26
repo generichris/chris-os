@@ -49,12 +49,17 @@ void shell_execute(char* cmd, int len) {
     if (len == 0) return;
 
     if (strcmp(cmd, "help") == 0) {
-        terminal_writestring("commands: help, clear, echo, version, meminfo, uptime, reboot, disk\n");
+        terminal_writestring("commands: help, clear, echo, version, meminfo, uptime, reboot, disk, ls, cat\n");
     } else if (strcmp(cmd, "clear") == 0) {
         terminal_initialize();
         return;
     } else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Chris OS v0.4\n");
+        terminal_writestring("     _        _       ___  ___ \n");
+        terminal_writestring("  __| |_  _ _(_)___  / _ \\/ __|\n");
+        terminal_writestring(" / _| ' \\| '_| (_-< | (_) \\__ \\\n");
+        terminal_writestring(" \\__|_||_|_| |_/__/  \\___/|___/\n");
+        terminal_writestring("\n");
+        terminal_writestring("Chris OS v0.5\n");
     } else if (strncmp(cmd, "echo ", 5) == 0) {
         terminal_writestring(cmd + 5);
         terminal_putchar('\n');
