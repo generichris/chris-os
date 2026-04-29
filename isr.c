@@ -43,7 +43,7 @@ void isr_handler(struct registers regs) {
     terminal_writestring(exceptions[regs.int_no]);
     terminal_writestring("\n");
 
-    // print EIP
+    
     terminal_writestring("EIP: 0x");
     uint32_t eip = regs.eip;
     char hex[9];
@@ -56,7 +56,7 @@ void isr_handler(struct registers regs) {
     terminal_writestring(hex);
     terminal_writestring("\n");
 
-    // print error code
+    
     terminal_writestring("ERR: 0x");
     uint32_t err = regs.err_code;
     char hex2[9];

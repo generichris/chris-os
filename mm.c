@@ -21,7 +21,7 @@ void mm_init() {
 
 void* kmalloc(size_t size) {
     if (heap_ptr + size > heap_end)
-        return 0;    // out of memory
+        return 0;    
 
     void* addr = heap_ptr;
     heap_ptr += size;

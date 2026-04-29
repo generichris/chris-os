@@ -40,17 +40,17 @@ static void ata_wait() {
 }
 
 void ata_init() {
-    // Software reset
+    
     outb(0x3F6, 0x04);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
     outb(0x3F6, 0x00);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
 
-    // Select master drive
+    
     outb(ATA_HDDEVSEL, 0xA0);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
 
-    // Send IDENTIFY
+    
     outb(ATA_STATUS, 0xEC);
     ata_wait();
 
@@ -60,7 +60,7 @@ void ata_init() {
         return;
     }
 
-    // Drain the IDENTIFY data so DRQ is cleared before future reads
+    
     if (status & ATA_SR_DRQ) {
         for (int i = 0; i < 256; i++)
             inw(ATA_PRIMARY_IO);
@@ -88,6 +88,94 @@ uint8_t ata_read_sector(uint32_t lba, uint8_t* buf) {
 
     for (int i = 0; i < 256; i++)
         ((uint16_t*)buf)[i] = inw(ATA_PRIMARY_IO);
+
+    return 1;
+}
+
+
+int ata_detect(uint8_t drive) {
+    uint8_t sel = drive ? 0xB0 : 0xA0;
+    outb(ATA_HDDEVSEL, sel);
+    for (int i = 0; i < 15000; i++) asm volatile("nop");
+
+    
+    outb(ATA_SECCOUNT, 0);
+    outb(ATA_LBA_LOW,  0);
+    outb(ATA_LBA_MID,  0);
+    outb(ATA_LBA_HIGH, 0);
+    outb(ATA_STATUS,   0xEC);  
+
+    uint8_t status = inb(ATA_STATUS);
+    if (status == 0x00 || status == 0xFF)
+        return 0;  
+
+    
+    int timeout = 100000;
+    while ((inb(ATA_STATUS) & ATA_SR_BSY) && --timeout > 0);
+    if (timeout == 0) return 0;
+
+    
+    if (inb(ATA_LBA_MID) != 0 || inb(ATA_LBA_HIGH) != 0)
+        return 0;
+
+    
+    while (1) {
+        status = inb(ATA_STATUS);
+        if (status & ATA_SR_DRQ) break;
+        if (status & ATA_SR_ERR) return 0;
+    }
+
+    
+    for (int i = 0; i < 256; i++) inw(ATA_PRIMARY_IO);
+
+    return 1;
+}
+
+
+uint8_t ata_read_sector_ex(uint8_t drive, uint32_t lba, uint8_t* buf) {
+    ata_wait();
+
+    outb(ATA_HDDEVSEL, (drive ? 0xF0 : 0xE0) | ((lba >> 24) & 0x0F));
+    for (int i = 0; i < 100; i++) asm volatile("nop");
+
+    outb(ATA_SECCOUNT, 1);
+    outb(ATA_LBA_LOW,  (uint8_t)(lba));
+    outb(ATA_LBA_MID,  (uint8_t)(lba >> 8));
+    outb(ATA_LBA_HIGH, (uint8_t)(lba >> 16));
+    outb(ATA_STATUS,   ATA_CMD_READ);
+
+    uint8_t s;
+    do {
+        s = inb(ATA_STATUS);
+    } while ((s & ATA_SR_BSY) || !(s & ATA_SR_DRQ));
+
+    for (int i = 0; i < 256; i++)
+        ((uint16_t*)buf)[i] = inw(ATA_PRIMARY_IO);
+
+    return 1;
+}
+
+
+uint8_t ata_write_sector_ex(uint8_t drive, uint32_t lba, uint8_t* buf) {
+    ata_wait();
+
+    outb(ATA_HDDEVSEL, (drive ? 0xF0 : 0xE0) | ((lba >> 24) & 0x0F));
+    for (int i = 0; i < 100; i++) asm volatile("nop");
+
+    outb(ATA_SECCOUNT, 1);
+    outb(ATA_LBA_LOW,  (uint8_t)(lba));
+    outb(ATA_LBA_MID,  (uint8_t)(lba >> 8));
+    outb(ATA_LBA_HIGH, (uint8_t)(lba >> 16));
+    outb(ATA_STATUS,   ATA_CMD_WRITE);
+
+    while (!(inb(ATA_STATUS) & ATA_SR_DRQ));
+
+    for (int i = 0; i < 256; i++)
+        outw(ATA_PRIMARY_IO, ((uint16_t*)buf)[i]);
+
+    
+    outb(ATA_STATUS, 0xE7);
+    ata_wait();
 
     return 1;
 }

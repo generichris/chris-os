@@ -41,7 +41,7 @@ error_msg db 'boot error', 0
 disk_packet:
     db 0x10
     db 0
-    dw 16
+    dw 64       ; load 64 sectors (32KB) - enough room for the kernel to grow
     dw 0x0000
     dw 0x1000
     dq 1
