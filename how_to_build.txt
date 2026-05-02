@@ -3,3 +3,6 @@ sudo apt install nasm qemu-system-i386 build-essential
 make — compiles everything
 make run — boots in QEMU
 make clean — wipes all the built files
+make mkfs — makes file system
+make hdd — makes hdd on qemu
+make all — makes all
