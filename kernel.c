@@ -13,6 +13,7 @@
 #include "vesa.h"
 #include "draw.h"
 #include "gterm.h"
+#include "mouse.h"
 
 // ---- String helpers ----
 
@@ -38,12 +39,15 @@ void kstrcpy(char* dest, const char* src) {
     *dest = 0;
 }
 
-void itoa(uint32_t n, char* buf) {
+void itoa(int n, char* buf) {
     if (n == 0) { buf[0] = '0'; buf[1] = 0; return; }
     int i = 0;
+    int is_neg = 0;
+    if (n < 0) { is_neg = 1; n = -n; }
     char tmp[12];
     while (n > 0) { tmp[i++] = '0' + (n % 10); n /= 10; }
     int j = 0;
+    if (is_neg) buf[j++] = '-';
     while (i > 0) buf[j++] = tmp[--i];
     buf[j] = 0;
 }
@@ -150,6 +154,7 @@ void kernel(void) {
     vga_debug('F'); keyboard_init();
     vga_debug('G'); ata_init();
     vga_debug('H'); fat32_init();
+    vga_debug('M'); mouse_init();
     vga_debug('I'); irq_install_handler(0, timer_handler);
     asm volatile("sti");
 
@@ -159,7 +164,7 @@ void kernel(void) {
     if (fb_active) {
         draw_desktop();
         draw_taskbar();
-        draw_window(fb_width - 280, 40, 250, 100, "ChrisOS v0.5");
+        draw_window(fb_width - 280, 40, 250, 100, "ChrisOS v0.6");
         draw_string(fb_width - 274, 76, "VESA graphical mode", COLOR_WIN_TEXT, COLOR_WIN_BG);
         draw_string(fb_width - 274, 96, "1024x768x32bpp", COLOR_PROMPT, COLOR_WIN_BG);
         gterm_init();
@@ -167,11 +172,31 @@ void kernel(void) {
 
     shell_init();
 
+    char debug_buf[64];
+
     for (;;) {
         asm volatile("hlt");
         if (fb_active) {
             draw_taskbar();
             gterm_tick();
+            mouse_tick();
+            
+            // Draw debug info
+            extern volatile int mouse_x, mouse_y, mouse_b, last_dx, last_dy;
+            int len = 0;
+            debug_buf[len++] = 'X'; debug_buf[len++] = ':'; 
+            itoa((int)mouse_x, debug_buf + len); len = strlen(debug_buf);
+            debug_buf[len++] = ' '; debug_buf[len++] = 'Y'; debug_buf[len++] = ':';
+            itoa((int)mouse_y, debug_buf + len); len = strlen(debug_buf);
+            debug_buf[len++] = ' '; debug_buf[len++] = 'B'; debug_buf[len++] = ':';
+            itoa((int)mouse_b, debug_buf + len); len = strlen(debug_buf);
+            debug_buf[len++] = ' '; debug_buf[len++] = 'D'; debug_buf[len++] = 'X'; debug_buf[len++] = ':';
+            itoa((int)last_dx, debug_buf + len); len = strlen(debug_buf);
+            debug_buf[len++] = ' '; debug_buf[len++] = 'D'; debug_buf[len++] = 'Y'; debug_buf[len++] = ':';
+            itoa((int)last_dy, debug_buf + len);
+            
+            draw_rect(0, 0, 200, 20, COLOR_BLACK);
+            draw_string(4, 4, debug_buf, COLOR_WHITE, COLOR_BLACK);
         }
     }
 }

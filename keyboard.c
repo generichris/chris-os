@@ -43,8 +43,9 @@ static int ext_pending = 0;
 
 static void keyboard_handler(struct registers regs) {
     (void)regs;
+    
+    // We rely purely on IRQ 1 routing. Read exactly one byte.
     uint8_t sc = inb(0x60);
-
     
     if (sc == 0xE0) { ext_pending = 1; return; }
 

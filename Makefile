@@ -18,7 +18,9 @@ OBJS = build/entry.o \
        build/vesa.o \
        build/draw.o \
        build/font.o \
-       build/gterm.o
+       build/gterm.o \
+       build/mouse.o \
+       build/installer.o
 
 all:
 	mkdir -p build
@@ -39,6 +41,8 @@ all:
 	$(CC) -c draw.c     -o build/draw.o     $(CFLAGS)
 	$(CC) -c font.c     -o build/font.o     $(CFLAGS)
 	$(CC) -c gterm.c    -o build/gterm.o    $(CFLAGS)
+	$(CC) -c mouse.c    -o build/mouse.o    $(CFLAGS)
+	$(CC) -c installer.c -o build/installer.o $(CFLAGS)
 	$(LD) -T linker.ld $(OBJS) -o build/kernel.elf -nostdlib
 	$(OBJCOPY) -O binary build/kernel.elf build/kernel.bin
 	@SECTORS=$$(( ($$(stat -c%s build/kernel.bin) + 511) / 512 )); \

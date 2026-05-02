@@ -151,3 +151,52 @@ uint8_t ata_write_sector(uint32_t lba, uint8_t* buf) {
 
     return 1;
 }
+
+int ata_detect(uint8_t drive) {
+    if (drive > 1) return 0;
+    outb(ATA_HDDEVSEL, 0xA0 | (drive << 4));
+    for (int i = 0; i < 10000; i++) asm volatile("nop");
+    uint8_t status = inb(ATA_STATUS);
+    if (status == 0xFF || status == 0) return 0;
+    
+    outb(ATA_SECCOUNT, 0);
+    outb(ATA_LBA_LOW,  0);
+    outb(ATA_LBA_MID,  0);
+    outb(ATA_LBA_HIGH, 0);
+    outb(ATA_COMMAND, ATA_CMD_IDENTIFY);
+    status = inb(ATA_STATUS);
+    if (status == 0) return 0;
+    if (!ata_wait_bsy()) return 0;
+    if (inb(ATA_LBA_MID) || inb(ATA_LBA_HIGH)) return 0;
+    if (!ata_wait_drq()) return 0;
+    for (int i = 0; i < 256; i++) inw(ATA_PRIMARY_IO);
+    return 1;
+}
+
+uint8_t ata_read_sector_ex(uint8_t drive, uint32_t lba, uint8_t* buf) {
+    if (!ata_wait_bsy()) return 0;
+    outb(ATA_HDDEVSEL, 0xE0 | (drive << 4) | ((lba >> 24) & 0x0F));
+    for (int i = 0; i < 100; i++) asm volatile("nop");
+    outb(ATA_SECCOUNT, 1);
+    outb(ATA_LBA_LOW,  (uint8_t)(lba));
+    outb(ATA_LBA_MID,  (uint8_t)(lba >> 8));
+    outb(ATA_LBA_HIGH, (uint8_t)(lba >> 16));
+    outb(ATA_COMMAND,  ATA_CMD_READ);
+    if (!ata_wait_drq()) return 0;
+    for (int i = 0; i < 256; i++) ((uint16_t*)buf)[i] = inw(ATA_PRIMARY_IO);
+    return 1;
+}
+
+uint8_t ata_write_sector_ex(uint8_t drive, uint32_t lba, uint8_t* buf) {
+    if (!ata_wait_bsy()) return 0;
+    outb(ATA_HDDEVSEL, 0xE0 | (drive << 4) | ((lba >> 24) & 0x0F));
+    for (int i = 0; i < 100; i++) asm volatile("nop");
+    outb(ATA_SECCOUNT, 1);
+    outb(ATA_LBA_LOW,  (uint8_t)(lba));
+    outb(ATA_LBA_MID,  (uint8_t)(lba >> 8));
+    outb(ATA_LBA_HIGH, (uint8_t)(lba >> 16));
+    outb(ATA_COMMAND,  ATA_CMD_WRITE);
+    if (!ata_wait_drq()) return 0;
+    for (int i = 0; i < 256; i++) outw(ATA_PRIMARY_IO, ((uint16_t*)buf)[i]);
+    return 1;
+}

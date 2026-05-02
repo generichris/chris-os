@@ -8,16 +8,37 @@ extern uint32_t* fb_addr;
 extern uint32_t  fb_width;
 extern uint32_t  fb_height;
 extern uint32_t  fb_pitch;   // bytes per row (may differ from width*4)
+extern uint32_t  fb_bpp;
 extern int       fb_active;
 
 void vesa_init(void);
 
-// fb_pitch is in bytes; divide by 4 to get uint32_t stride
+// fb_pitch is in bytes
 static inline void fb_put_pixel(int x, int y, uint32_t color) {
     if ((unsigned)x < fb_width && (unsigned)y < fb_height) {
-        uint32_t stride = fb_pitch >> 2;   // bytes -> pixels
-        fb_addr[y * stride + x] = color;
+        if (fb_bpp == 32) {
+            uint32_t stride = fb_pitch >> 2;   // bytes -> pixels
+            fb_addr[y * stride + x] = color;
+        } else if (fb_bpp == 24) {
+            uint8_t* p = (uint8_t*)fb_addr + y * fb_pitch + x * 3;
+            p[0] = color & 0xFF;
+            p[1] = (color >> 8) & 0xFF;
+            p[2] = (color >> 16) & 0xFF;
+        }
     }
+}
+
+static inline uint32_t fb_get_pixel(int x, int y) {
+    if ((unsigned)x < fb_width && (unsigned)y < fb_height) {
+        if (fb_bpp == 32) {
+            uint32_t stride = fb_pitch >> 2;
+            return fb_addr[y * stride + x];
+        } else if (fb_bpp == 24) {
+            uint8_t* p = (uint8_t*)fb_addr + y * fb_pitch + x * 3;
+            return p[0] | (p[1] << 8) | (p[2] << 16);
+        }
+    }
+    return 0;
 }
 
 static inline uint32_t rgb(uint8_t r, uint8_t g, uint8_t b) {

@@ -17,7 +17,7 @@ void   kstrcpy(char* dest, const char* src);
 char*  kstrchr(const char* s, char c);
 
 
-void itoa(uint32_t n, char* buf);
+void itoa(int n, char* buf);
 
 
 void     move_cursor(size_t x, size_t y);

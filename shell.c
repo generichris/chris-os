@@ -6,6 +6,7 @@
 #include "vesa.h"
 #include "draw.h"
 #include "gterm.h"
+#include "installer.h"
 
 #define INPUT_SIZE 256
 
@@ -32,6 +33,11 @@ void shell_init(void) {
 }
 
 void shell_process_char(char c) {
+    if (installer_is_active()) {
+        installer_handle_char(c);
+        return;
+    }
+
     if (c == '\n') {
         terminal_putchar('\n');
         shell_execute(input, input_len);
@@ -67,12 +73,15 @@ void shell_execute(char* cmd, int len) {
     if (len == 0) return;
 
     if (strcmp(cmd, "help") == 0) {
-        terminal_writestring("commands: help, clear, echo, version, meminfo, uptime, reboot, disk, ui\n");
+        terminal_writestring("commands: help, clear, echo, version, meminfo, uptime, reboot, disk, ui, install\n");
+    } else if (strcmp(cmd, "install") == 0) {
+        installer_start();
+        return;
     } else if (strcmp(cmd, "clear") == 0) {
         terminal_initialize();
         return;
     } else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Chris OS v0.5 (VESA UI build)\n");
+        terminal_writestring("Chris OS v0.6 (VESA UI build)\n");
     } else if (strncmp(cmd, "echo ", 5) == 0) {
         terminal_writestring(cmd + 5);
         terminal_putchar('\n');
@@ -121,7 +130,7 @@ void shell_execute(char* cmd, int len) {
             draw_desktop();
             draw_taskbar();
             draw_window(100, 60, 400, 200, "About ChrisOS");
-            draw_string(108, 96,  "ChrisOS v0.5 - VESA Graphical Mode", COLOR_WIN_TEXT, COLOR_WIN_BG);
+            draw_string(108, 96,  "ChrisOS v0.6 - VESA Graphical Mode", COLOR_WIN_TEXT, COLOR_WIN_BG);
             draw_string(108, 114, "1024 x 768 x 32bpp linear framebuffer", COLOR_WIN_TEXT, COLOR_WIN_BG);
             draw_string(108, 132, "Bitmap font renderer (8x16 PSF-style)", COLOR_WIN_TEXT, COLOR_WIN_BG);
             draw_string(108, 150, "draw_rect / draw_line / draw_window", COLOR_WIN_TEXT, COLOR_WIN_BG);

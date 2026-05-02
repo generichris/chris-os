@@ -1,3 +1,6 @@
 build
 myfiles
 *:Zone.Identifier
+logs
+remover.py
+wiki
