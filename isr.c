@@ -38,14 +38,14 @@ static const char *exceptions[] = {
     "unknown interrupt"
 };
 
-void isr_handler(struct registers regs) {
+void isr_handler(struct registers *regs) {
     terminal_writestring("KERNEL PANIC: ");
-    terminal_writestring(exceptions[regs.int_no]);
+    terminal_writestring(exceptions[regs->int_no]);
     terminal_writestring("\n");
 
     
     terminal_writestring("EIP: 0x");
-    uint32_t eip = regs.eip;
+    uint32_t eip = regs->eip;
     char hex[9];
     hex[8] = 0;
     for (int i = 7; i >= 0; i--) {
@@ -58,7 +58,7 @@ void isr_handler(struct registers regs) {
 
     
     terminal_writestring("ERR: 0x");
-    uint32_t err = regs.err_code;
+    uint32_t err = regs->err_code;
     char hex2[9];
     hex2[8] = 0;
     for (int i = 7; i >= 0; i--) {

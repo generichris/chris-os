@@ -28,7 +28,9 @@ IRQ 15, 47
 
 irq_common:
     pusha
+    push esp
     call irq_handler
+    add esp, 4
     popa
     add esp, 8
     iret

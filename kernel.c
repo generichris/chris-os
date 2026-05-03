@@ -15,7 +15,7 @@
 #include "gterm.h"
 #include "mouse.h"
 
-// ---- String helpers ----
+
 
 size_t strlen(const char* str) {
     size_t len = 0;
@@ -52,7 +52,7 @@ void itoa(int n, char* buf) {
     buf[j] = 0;
 }
 
-// ---- VGA text-mode terminal (fallback when no VESA) ----
+
 
 size_t terminal_row;
 size_t terminal_column;
@@ -67,7 +67,7 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 }
 
 void move_cursor(size_t x, size_t y) {
-    if (fb_active) return;   // no hardware cursor in graphics mode
+    if (fb_active) return;   
     uint16_t pos = y * VGA_WIDTH + x;
     asm volatile("outb %%al, %%dx" : : "a"((uint8_t)0x0F), "d"((uint16_t)0x3D4));
     asm volatile("outb %%al, %%dx" : : "a"((uint8_t)(pos & 0xFF)), "d"((uint16_t)0x3D5));
@@ -90,7 +90,7 @@ void terminal_initialize(void) {
 void terminal_setcolor(uint8_t color) { terminal_color = color; }
 
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
-    if (fb_active) return;   // not used in gfx mode
+    if (fb_active) return;   
     terminal_buffer[y * VGA_WIDTH + x] = vga_entry(c, color);
 }
 
@@ -125,15 +125,15 @@ void terminal_writestring(const char* data) {
     terminal_write(data, strlen(data));
 }
 
-// ---- Timer ----
+
 
 static uint32_t ticks = 0;
 static void timer_handler(struct registers regs) { (void)regs; ticks++; }
 uint32_t get_ticks(void) { return ticks; }
 
-// ---- Kernel entry ----
 
-// Write a char to top-left VGA cell (white on red) — always visible even in gfx mode
+
+
 static void vga_debug(char c) {
     volatile uint16_t* vga = (volatile uint16_t*)0xB8000;
     vga[0] = (uint16_t)(0x4F00 | (uint8_t)c);
@@ -158,7 +158,7 @@ void kernel(void) {
     vga_debug('I'); irq_install_handler(0, timer_handler);
     asm volatile("sti");
 
-    // Try VESA - bootloader stored params at 0x500
+    
     vesa_init();
 
     if (fb_active) {
@@ -181,7 +181,7 @@ void kernel(void) {
             gterm_tick();
             mouse_tick();
             
-            // Draw debug info
+            
             extern volatile int mouse_x, mouse_y, mouse_b, last_dx, last_dy;
             int len = 0;
             debug_buf[len++] = 'X'; debug_buf[len++] = ':'; 

@@ -10,6 +10,6 @@ struct registers {
 };
 
 void isr_init();
-void isr_handler(struct registers regs);
+void isr_handler(struct registers *regs);
 
 #endif

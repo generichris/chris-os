@@ -37,12 +37,12 @@ static inline void outw(uint16_t port, uint16_t v) {
     asm volatile("outw %%ax, %%dx" : : "a"(v), "d"(port));
 }
 
-// Returns 0 on timeout, 1 if ready
+
 static int ata_wait_bsy(void) {
     for (int i = 0; i < ATA_TIMEOUT; i++) {
         if (!(inb(ATA_STATUS) & ATA_SR_BSY)) return 1;
     }
-    return 0;  // timed out
+    return 0;  
 }
 
 static int ata_wait_drq(void) {
@@ -51,30 +51,30 @@ static int ata_wait_drq(void) {
         if (s & ATA_SR_ERR) return 0;
         if (s & ATA_SR_DRQ) return 1;
     }
-    return 0;  // timed out
+    return 0;  
 }
 
 void ata_init(void) {
     ata_present = 0;
 
-    // Software reset
+    
     outb(ATA_PRIMARY_CTL, 0x04);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
     outb(ATA_PRIMARY_CTL, 0x00);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
 
-    // Select master drive
+    
     outb(ATA_HDDEVSEL, 0xA0);
     for (int i = 0; i < 10000; i++) asm volatile("nop");
 
-    // Check if drive exists at all
+    
     uint8_t status = inb(ATA_STATUS);
     if (status == 0xFF) {
         terminal_writestring("No ATA bus\n");
         return;
     }
 
-    // Send IDENTIFY
+    
     outb(ATA_SECCOUNT, 0);
     outb(ATA_LBA_LOW,  0);
     outb(ATA_LBA_MID,  0);
@@ -92,7 +92,7 @@ void ata_init(void) {
         return;
     }
 
-    // Check it's not an ATAPI device
+    
     if (inb(ATA_LBA_MID) || inb(ATA_LBA_HIGH)) {
         terminal_writestring("ATAPI, skipping\n");
         return;
@@ -103,7 +103,7 @@ void ata_init(void) {
         return;
     }
 
-    // Drain IDENTIFY data
+    
     for (int i = 0; i < 256; i++) inw(ATA_PRIMARY_IO);
 
     ata_present = 1;

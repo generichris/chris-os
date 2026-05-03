@@ -10,7 +10,7 @@ uint32_t  fb_bpp    = 32;
 int       fb_active = 0;
 
 void vesa_init(void) {
-    // Suppress GCC's array-bounds warning by going through a local var
+    
     uintptr_t base = 0x500;
     uint32_t addr   = *(volatile uint32_t*)(base +  0);
     uint32_t width  = *(volatile uint32_t*)(base +  4);

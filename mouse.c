@@ -16,7 +16,7 @@ volatile int last_dy = 0;
 static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[3];
 
-// Cursor backup buffer (12x20)
+
 static uint32_t cursor_bg[20][12];
 static int cursor_drawn = 0;
 static int cursor_drawn_x = 0;
@@ -33,15 +33,14 @@ static void mouse_wait(uint8_t a_type) {
     uint32_t timeout = 100000;
     if (a_type == 0) {
         while (timeout--) {
-            if ((inb(0x64) & 1) == 1) return;
+            if ((inb(0x64) & 1) == 1) return;  // wait for output buffer full
         }
     } else {
         while (timeout--) {
-            if ((inb(0x64) & 2) == 0) return;
+            if ((inb(0x64) & 2) == 0) return;  // wait for input buffer empty
         }
     }
 }
-
 static void mouse_write(uint8_t a_write) {
     mouse_wait(1);
     outb(0x64, 0xD4);
@@ -57,10 +56,10 @@ static uint8_t mouse_read(void) {
 static void mouse_handler(struct registers regs) {
     (void)regs;
     
-    // We rely purely on IRQ 12 routing. Read exactly one byte.
+    
     uint8_t d = inb(0x60);
     
-    // Prevent desync: first byte must have bit 3 set, and not be an ACK
+    
     if (mouse_cycle == 0) {
         if ((d & 0x08) == 0 || d == 0xFA) return;
     }
@@ -76,7 +75,7 @@ static void mouse_handler(struct registers regs) {
         int dx = (int)mouse_byte[1];
         int dy = (int)mouse_byte[2];
 
-        // Sign extension
+        
         if (mouse_byte[0] & 0x10) dx |= 0xFFFFFF00;
         if (mouse_byte[0] & 0x20) dy |= 0xFFFFFF00;
 
@@ -84,7 +83,7 @@ static void mouse_handler(struct registers regs) {
         last_dy = dy;
 
         mouse_x += dx;
-        mouse_y -= dy; // Invert Y
+        mouse_y -= dy; 
 
         if (fb_active) {
             if (mouse_x < 0) mouse_x = 0;
@@ -92,9 +91,9 @@ static void mouse_handler(struct registers regs) {
             if (mouse_x >= (int)fb_width) mouse_x = fb_width - 1;
             if (mouse_y >= (int)fb_height) mouse_y = fb_height - 1;
 
-            // Handle click
+            
             if ((mouse_b & 1) && !(prev_b & 1)) {
-                // Left click! Check if we clicked the start button.
+                
                 int sh = fb_height;
                 if (mouse_x >= 4 && mouse_x <= 4 + 72 && mouse_y >= sh - 36 + 4 && mouse_y <= sh - 36 + 4 + 28) {
                     installer_start();
@@ -105,25 +104,33 @@ static void mouse_handler(struct registers regs) {
 }
 
 void mouse_init(void) {
-    // Flush old data
+    // Flush output buffer
     while (inb(0x64) & 1) inb(0x60);
 
+    // Enable auxiliary device
     mouse_wait(1);
+    if ((inb(0x64) & 2)) return;  // controller not responding, bail out
     outb(0x64, 0xA8);
 
+    // Enable mouse interrupt in command byte
     mouse_wait(1);
     outb(0x64, 0x20);
     uint8_t status = mouse_read() | 2;
-    status &= ~0x20; // Clear "Disable Mouse Clock" bit
+    status &= ~0x20;
     mouse_wait(1);
     outb(0x64, 0x60);
     mouse_wait(1);
     outb(0x60, status);
 
+    // Set defaults
     mouse_write(0xF6);
-    mouse_read();
+    uint8_t ack = mouse_read();
+    if (ack != 0xFA) return;  // no ACK, bail
+
+    // Enable data reporting
     mouse_write(0xF4);
-    mouse_read();
+    ack = mouse_read();
+    if (ack != 0xFA) return;
 
     irq_install_handler(12, mouse_handler);
 }
@@ -138,7 +145,7 @@ void mouse_tick(void) {
         initialized = 1;
     }
     
-    // Erase old cursor
+    
     if (cursor_drawn) {
         for (int row = 0; row < 20; row++) {
             for (int col = 0; col < 12; col++) {
@@ -147,7 +154,7 @@ void mouse_tick(void) {
         }
     }
     
-    // Save new background
+    
     cursor_drawn_x = mouse_x;
     cursor_drawn_y = mouse_y;
     for (int row = 0; row < 20; row++) {
@@ -156,7 +163,7 @@ void mouse_tick(void) {
         }
     }
     
-    // Draw cursor
+    
     draw_cursor(cursor_drawn_x, cursor_drawn_y);
     cursor_drawn = 1;
 }

@@ -35,7 +35,9 @@ ISR_NOERR 15
 
 isr_common:
     pusha
+    push esp
     call isr_handler
+    add esp, 4
     popa
     add esp, 8
     iret

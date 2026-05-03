@@ -13,12 +13,12 @@
 static char input[INPUT_SIZE];
 static int input_len = 0;
 
-// In graphics mode we set a "color" by swapping the gterm fg;
-// in text mode we use VGA color attributes as before.
+
+
 static void set_fg(uint32_t gfx_color, uint8_t vga_attr) {
     if (fb_active) {
-        // There's no per-char color API exposed yet — gterm uses a
-        // module-level cur_fg.  We reach it through a small accessor.
+        
+        
         gterm_cur_fg = gfx_color;
         (void)vga_attr;
     } else {
@@ -126,7 +126,7 @@ void shell_execute(char* cmd, int len) {
         }
     } else if (strcmp(cmd, "ui") == 0) {
         if (fb_active) {
-            // Redraw the desktop to demo the UI layer
+            
             draw_desktop();
             draw_taskbar();
             draw_window(100, 60, 400, 200, "About ChrisOS");
@@ -134,7 +134,7 @@ void shell_execute(char* cmd, int len) {
             draw_string(108, 114, "1024 x 768 x 32bpp linear framebuffer", COLOR_WIN_TEXT, COLOR_WIN_BG);
             draw_string(108, 132, "Bitmap font renderer (8x16 PSF-style)", COLOR_WIN_TEXT, COLOR_WIN_BG);
             draw_string(108, 150, "draw_rect / draw_line / draw_window", COLOR_WIN_TEXT, COLOR_WIN_BG);
-            // Restore terminal window on top
+            
             gterm_init();
             shell_init();
         } else {
@@ -147,8 +147,8 @@ void shell_execute(char* cmd, int len) {
     }
 }
 
-// ---- Arrow key / history stubs ----
-// cursor_pos tracks where in the input line the cursor is
+
+
 static int cursor_pos = 0;
 
 void shell_cursor_left(void) {
@@ -159,13 +159,13 @@ void shell_cursor_right(void) {
     if (cursor_pos < input_len) cursor_pos++;
 }
 
-// Simple single-level history (last command)
+
 static char history[INPUT_SIZE];
 static int  history_len = 0;
 
 void shell_history_up(void) {
     if (history_len == 0) return;
-    // Replace current input with last history entry
+    
     for (int i = 0; i < history_len; i++) input[i] = history[i];
     input_len  = history_len;
     input[input_len] = 0;
@@ -173,7 +173,7 @@ void shell_history_up(void) {
 }
 
 void shell_history_down(void) {
-    // Clear input
+    
     input_len  = 0;
     input[0]   = 0;
     cursor_pos = 0;

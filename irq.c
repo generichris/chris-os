@@ -45,13 +45,13 @@ void irq_uninstall_handler(int irq) {
     irq_handlers[irq] = 0;
 }
 
-void irq_handler(struct registers regs) {
-    if (regs.int_no >= 40)
+void irq_handler(struct registers *regs) {
+    if (regs->int_no >= 40)
         outb(0xA0, 0x20);
     outb(0x20, 0x20);
 
-    if (irq_handlers[regs.int_no - 32])
-        irq_handlers[regs.int_no - 32](regs);
+    if (irq_handlers[regs->int_no - 32])
+        irq_handlers[regs->int_no - 32](*regs);
 }
 
 void irq_init() {

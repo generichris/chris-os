@@ -1,11 +1,11 @@
 #include "draw.h"
 #include "font.h"
 #include "vesa.h"
-#include "kernel.h"  // for get_ticks()
+#include "kernel.h"  
 
-// -----------------------------------------------------------------------
-// Primitives
-// -----------------------------------------------------------------------
+
+
+
 
 void draw_rect(int x, int y, int w, int h, uint32_t color) {
     for (int row = y; row < y + h; row++)
@@ -29,7 +29,7 @@ void draw_rect_outline(int x, int y, int w, int h, uint32_t color) {
     draw_vline(x + w - 1, y,         h, color);
 }
 
-// Bresenham line
+
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
     int dx =  (x1 > x0 ? x1 - x0 : x0 - x1);
     int dy = -(y1 > y0 ? y1 - y0 : y0 - y1);
@@ -45,9 +45,9 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
     }
 }
 
-// -----------------------------------------------------------------------
-// Font rendering
-// -----------------------------------------------------------------------
+
+
+
 
 int draw_char(int x, int y, char c, uint32_t fg, uint32_t bg) {
     if (c < FONT_FIRST || c > FONT_LAST) c = '?';
@@ -88,34 +88,34 @@ int draw_string_alpha(int x, int y, const char* s, uint32_t fg) {
     return x;
 }
 
-// -----------------------------------------------------------------------
-// UI Widgets
-// -----------------------------------------------------------------------
+
+
+
 
 #define TITLEBAR_H 24
 #define SHADOW_OFF  3
 
 void draw_window(int x, int y, int w, int h, const char* title) {
-    // Drop shadow
+    
     draw_rect(x + SHADOW_OFF, y + SHADOW_OFF, w, h, rgb(0, 0, 0));
 
-    // Window background
+    
     draw_rect(x, y, w, h, COLOR_WIN_BG);
 
-    // Title bar gradient (two-tone approximation: top slightly lighter)
+    
     draw_rect(x, y, w, TITLEBAR_H / 2, rgb(80, 120, 200));
     draw_rect(x, y + TITLEBAR_H / 2, w, TITLEBAR_H / 2, COLOR_WIN_TITLE);
 
-    // Title text centered-ish
+    
     draw_string_alpha(x + 6, y + 4, title, COLOR_WHITE);
 
-    // Close button
+    
     int cx = x + w - 18;
     int cy = y + 4;
     draw_rect(cx, cy, 14, 14, rgb(200, 60, 60));
     draw_string_alpha(cx + 3, cy, "x", COLOR_WHITE);
 
-    // Thin border
+    
     draw_rect_outline(x, y, w, h, rgb(40, 60, 100));
 }
 
@@ -125,23 +125,23 @@ void draw_taskbar(void) {
     int sw = (int)fb_width;
     int sh = (int)fb_height;
 
-    // Bar background
+    
     draw_rect(0, sh - TASKBAR_H, sw, TASKBAR_H, COLOR_TASKBAR);
-    // Top edge highlight
+    
     draw_hline(0, sh - TASKBAR_H, sw, rgb(70, 90, 130));
 
-    // Start-style button on the left
+    
     draw_rect(4, sh - TASKBAR_H + 4, 72, TASKBAR_H - 8, COLOR_WIN_TITLE);
     draw_rect_outline(4, sh - TASKBAR_H + 4, 72, TASKBAR_H - 8, rgb(100, 140, 220));
     draw_string_alpha(10, sh - TASKBAR_H + 10, "ChrisOS", COLOR_WHITE);
 
-    // Clock on the right — show tick count as uptime seconds
+    
     char timebuf[16];
     uint32_t secs = get_ticks() / 18;
-    // format mm:ss
+    
     int mins = (int)(secs / 60);
     int sec  = (int)(secs % 60);
-    // manual format into timebuf
+    
     timebuf[0] = '0' + (mins / 10);
     timebuf[1] = '0' + (mins % 10);
     timebuf[2] = ':';
@@ -151,19 +151,19 @@ void draw_taskbar(void) {
     draw_string(sw - 60, sh - TASKBAR_H + 10, timebuf, COLOR_WHITE, COLOR_TASKBAR);
 }
 
-// Desktop: solid navy + simple grid-dot pattern
+
 void draw_desktop(void) {
     draw_rect(0, 0, (int)fb_width, (int)fb_height - TASKBAR_H, COLOR_DESKTOP);
 
-    // Subtle dot grid every 32px
+    
     for (int y = 16; y < (int)fb_height - TASKBAR_H; y += 32)
         for (int x = 16; x < (int)fb_width; x += 32)
             fb_put_pixel(x, y, rgb(35, 50, 70));
 }
 
-// -----------------------------------------------------------------------
-// Mouse cursor — simple 12x20 arrow bitmap
-// -----------------------------------------------------------------------
+
+
+
 static const uint16_t cursor_bmp[20] = {
     0x8000, 0xC000, 0xE000, 0xF000,
     0xF800, 0xFC00, 0xFE00, 0xFF00,
