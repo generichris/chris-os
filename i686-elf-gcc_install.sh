@@ -1,20 +1,15 @@
 #!/bin/bash
-
 set -e
-
 export PREFIX="$HOME/opt/cross"
 export TARGET=i686-elf
 export PATH="$PREFIX/bin:$PATH"
 
-sudo apt update
-sudo apt install -y build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo wget
+sudo dnf install -y gcc gcc-c++ make bison flex gmp-devel libmpc-devel mpfr-devel texinfo wget
 
 mkdir -p $HOME/opt/cross
-
 cd ~
 wget -nc https://ftp.gnu.org/gnu/binutils/binutils-2.41.tar.gz
 tar -xf binutils-2.41.tar.gz
-
 mkdir -p build-binutils
 cd build-binutils
 ../binutils-2.41/configure --target=$TARGET --prefix=$PREFIX --with-sysroot --disable-nls --disable-werror
@@ -24,7 +19,6 @@ make install
 cd ~
 wget -nc https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.gz
 tar -xf gcc-13.2.0.tar.gz
-
 mkdir -p build-gcc
 cd build-gcc
 ../gcc-13.2.0/configure --target=$TARGET --prefix=$PREFIX --disable-nls --enable-languages=c --without-headers
